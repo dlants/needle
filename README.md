@@ -13,8 +13,10 @@ vim.pack.add({ "https://github.com/dlants/needle" })
 require("needle").setup()
 ```
 
-needle has no external dependencies and only requires Neovim 0.12+ (for
-`vim.pack`).
+needle has no required external dependencies and only requires Neovim 0.12+
+(for `vim.pack`). The files picker prefers [`fd`](https://github.com/sharkdp/fd)
+and falls back to `rg`, then to `find` — so it works out of the box, but `fd`
+or `rg` is recommended for the best file listing.
 
 ## Sources
 
