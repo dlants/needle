@@ -1,0 +1,97 @@
+*needle.txt*	A fast, signal-aware fuzzy picker for neovim
+
+==============================================================================
+INTRODUCTION						*needle*
+
+needle is a fuzzy picker for neovim, rendered in plain splits (a prompt window
+plus a results window). It ranks files not just by fuzzy match score but by
+weighted signals about how relevant a file is to what you are currently doing.
+
+needle has no external dependencies and requires Neovim 0.12+ (for vim.pack).
+
+==============================================================================
+COMMANDS						*needle-commands*
+
+							*:Needle*
+:Needle [dir]		List files under the search root (fd/rg/find driven).
+			Calls |needle.files()|. Accepts an optional directory
+			argument.
+
+							*:NeedleBuffers*
+:NeedleBuffers		List the buffer list. Calls |needle.buffers()|.
+
+							*:NeedleHelp*
+:NeedleHelp		List help tags. Calls |needle.help()|.
+
+The search root is picked from the current buffer: cwd if the buffer is under
+it, else the nearest git root, else the buffer's directory.
+
+==============================================================================
+RANKING SIGNALS						*needle-signals*
+
+Files are scored by a fuzzy match (needle/score.lua) plus weighted signals,
+shown as a `blamg` flag prefix column:
+
+  in buffer list
+  adjacent dir	  directory proximity to open buffers (0..1)
+  recent access	  exponential decay against the access half-life
+  recent mtime
+  git dirty
+
+Access history is persisted to `stdpath("data")/needle/state.json` and updated
+on |BufWinEnter| (throttled).
+
+==============================================================================
+KEYMAPS							*needle-keymaps*
+
+Inside the picker:
+
+  <C-j> / <C-n> / <Down>	  next result
+  <C-k> / <C-p> / <Up>	  previous result
+  <C-d> / <C-u>		  jump 10 down / up
+  <CR>			  open
+  <C-x>			  open in split
+  <C-v>			  open in vsplit
+  <C-t>			  open in tab
+  <C-h>			  toggle unrestricted (--no-ignore) file listing
+  <Esc> / <C-c>		  close
+
+==============================================================================
+SETUP							*needle-setup*
+
+							*needle.setup()*
+require("needle").setup({opts})
+
+Configure needle. Default options: >lua
+
+  require("needle").setup({
+    -- files_command = nil,     -- override: a list, or function(unrestricted) -> list
+    weights = {
+      in_buffer     = 60,
+      adjacent_dir  = 50,
+      recent_access = 50,
+      recent_mtime  = 5,
+      git_dirty     = 8,
+    },
+    access_half_life_s = 86400,    -- 1 day
+    mtime_half_life_s  = 604800,   -- 1 week
+    max_render         = 80,
+    debounce_ms        = 25,
+  })
+<
+Suggested keymaps: >lua
+
+  vim.keymap.set("n", "<leader>f", function() require("needle").files() end)
+  vim.keymap.set("n", "<leader>b", function() require("needle").buffers() end)
+  vim.keymap.set("n", "<leader>h", function() require("needle").help() end)
+<
+
+							*needle.files()*
+							*needle.buffers()*
+							*needle.help()*
+needle.files({opts})	Open the file picker.
+needle.buffers()	Open the buffer picker.
+needle.help()		Open the help-tag picker.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
